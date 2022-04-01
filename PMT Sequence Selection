@@ -1,0 +1,105 @@
+
+Prepare a list of samples to provide sequencing data for the PMT program.
+
+There are four sample types, broken up by two categories, that are candidates for sequencing
+
+Product:
+Micro-5 = Raw stool samples, no processing performed
+Micro-6 = Post production FMT swab
+
+Clinical Receiving:
+PMTR_rectal: rectal swabs from FMT recipients
+PMTR_stool: stool swabs from FMT recipients, does include the CDT+ swabs
+
+
+Lets Load our libraries and data
+
+
+
+##PMT + PMTR Swab Count##
+##4/1/22##
+
+
+##Load Library##
+
+library(tidyverse)
+
+library(readxl)
+
+library(gt)
+
+library(remotes)
+
+library(gtExtras)
+
+setwd("~/R")
+
+##Load Data##
+
+PMTR_stool<-read_xls("PMTR_Stoolswab.xls")
+
+PMTR_rectal<-read_xls("PMTR_Rectalswab.xls")
+
+PMT_Micro_6<-read_xls("PMT_Micro_6.xls")
+
+PMT_Micro_5<-read_xls("PMT_Micro_5.xls")
+
+
+##Clean Data##
+
+##Micro_5
+
+PMT_Micro_5 <- PMT_Micro_5 %>% filter(`Sample Identifier` == "PMT-Microbiome-5")
+
+PMT_Micro_5 <- PMT_Micro_5 %>% filter(Location != "NA")
+
+PMT_Micro_5 <- PMT_Micro_5 %>% mutate(Seq = str_detect(Location,"Kelly")) %>% 
+  filter(Seq == FALSE)
+
+
+##Micro_6
+
+PMT_Micro_6 <- PMT_Micro_6 %>% filter(`Sample Identifier` == "PMT-Microbiome-6")
+
+PMT_Micro_6 <- PMT_Micro_6 %>% filter(Location != "NA")
+
+PMT_Micro_6 <- PMT_Micro_6 %>% mutate(Seq = str_detect(Location,"Kelly")) %>% 
+  filter(Seq == FALSE)
+
+##PMTR Rectal##
+
+PMTR_rectal <- PMTR_rectal %>% 
+  mutate(Seq = str_detect(Location, "Kelly")) %>% 
+  filter(Seq == FALSE)
+
+##PMTR Stool##
+
+PMTR_stool <- PMTR_stool %>% 
+  mutate(Seq = str_detect(Location, "Kelly")) %>% 
+  filter(Seq == FALSE)
+
+
+##Need to find the CDT+ from PMTR stool swabs##
+
+
+PMTR_stool_CDT <- PMTR_stool %>% 
+  filter(Identifier == "CDT+")
+
+
+##We want to do all of the PMTR samples since its only 40 samples and they are significant##
+
+PMTR_total<-rbind(PMTR_rectal,PMTR_stool)
+
+##We need to make a choice on which samples we want to sequence out of the products##
+
+##Lets see breakdown products by donors##
+
+PMT_Micro_5 %>% 
+  group_by(`Ext Participant ID`) %>% 
+  summarise(occurance = str_count(`Ext Participant ID`,"Donor")) %>% 
+  count(occurance)
+
+PMT_Micro_6 %>% 
+  group_by(`Ext Participant ID`) %>% 
+  summarise(occurance = str_count(`Ext Participant ID`,"Donor")) %>% 
+  count(occurance)
